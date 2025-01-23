@@ -5,8 +5,12 @@ import Header from "./Components/Headers/Header";
 import Home from "./Pages/Home/Home";
 import Video from "./Pages/Video/Video";
 import axios from 'axios';
+import SignUp from "./Components/Authorization/SignUp";
+import SignIn from "./Components/Authorization/SignIn";
+import ImageUploader from "./Components/ImageUpload/ImageUploader";
 
 const App = () => {
+  const [user, setUser] = useState(null); // State to track the signed-in user
   const [sidebar, setSidebar] = useState(true);
   const [videos, setVideos] = useState([]);
 
@@ -39,6 +43,18 @@ const App = () => {
           </div>
         ))}
       </div>
+      <h1>Welcome to Firebase App</h1>
+      {!user ? (
+        <>
+          <SignUp />
+          <SignIn />
+        </>
+      ) : (
+        <div>
+          <p>Welcome, {user.email}!</p>
+          <ImageUploader />
+        </div>
+      )}
     </div>
   );
 };
