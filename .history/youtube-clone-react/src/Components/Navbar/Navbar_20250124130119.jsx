@@ -18,7 +18,7 @@ const Navbar = ({ setSidebar }) => {
     <nav className='flex-div'>
       <div className="nav-left flex-div">
         <img src={menu_icon} alt="" className="menu-icon" onClick={sidebar_toggle} />
-        <Link to='/'> <img src={logo} alt="" className="logo" /></Link>
+        <Link to='/profile'> <img src={logo} alt="" className="logo" /></Link>
       </div>
       <div className="nav-middle flex-div">
         <div className="search-box flex-div">
@@ -30,9 +30,7 @@ const Navbar = ({ setSidebar }) => {
         <img src={upload_icon} alt="" />
         <img src={more_icon} alt="" />
         <img src={notification_icon} alt="" />
-        <Link to="/profile">
-          <img src={bennett} alt="Profile" className="user-icon" />
-        </Link>
+        <img src={bennett} alt="" className="user-icon" />
       </div>
     </nav>
   );

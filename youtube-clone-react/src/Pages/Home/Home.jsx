@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Sidebar from "../../Components/Sidebar/Sidebar";
 import Feed from "../../Components/Feed/Feed";
 import './Home.css'
+import { Navigate, Link } from 'react-router-dom'
 
 const Home = ({sidebar}) => {
 

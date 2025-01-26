@@ -10,6 +10,15 @@ import bennett from '../../assets/bennett.jpeg';
 import { Link } from 'react-router-dom';
 
 const Navbar = ({ setSidebar }) => {
+    return (
+        <nav>
+            <Link to="/">Home</Link>
+            <Link to="/profile">Profile</Link>
+        </nav>
+    );
+};
+
+const Navbar = ({ setSidebar }) => {
   const sidebar_toggle = (e) => {
     setSidebar((prev) => (prev === false ? true : false));
   };
@@ -30,9 +39,7 @@ const Navbar = ({ setSidebar }) => {
         <img src={upload_icon} alt="" />
         <img src={more_icon} alt="" />
         <img src={notification_icon} alt="" />
-        <Link to="/profile">
-          <img src={bennett} alt="Profile" className="user-icon" />
-        </Link>
+        <img src={bennett} alt="" className="user-icon" />
       </div>
     </nav>
   );

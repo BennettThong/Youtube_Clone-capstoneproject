@@ -9,6 +9,6 @@ export const uploadImage = async (file) => {
   return getDownloadURL(snapshot.ref);
 };
 
-export { storage }; 
+export { storage }; // Corrected export
 
 export default storage;
