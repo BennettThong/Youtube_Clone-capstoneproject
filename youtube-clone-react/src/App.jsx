@@ -55,7 +55,7 @@ const App = () => {
             element={user ? <Navigate to="/home" replace /> : <Login />} />
         <Route path="/register" element={<Registration />} />
         <Route path="/home" element={<Home sidebar={sidebar} />}  />
-        <Route path="/video/:categoryId/:videoId" element={<Video />} />
+        <Route path="/home/video/:categoryId/:videoId" element={<Video />} />
         <Route path="/profile" element={<UserProfile />} />
         </Routes>
 
