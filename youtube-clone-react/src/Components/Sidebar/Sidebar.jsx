@@ -15,8 +15,7 @@ import simon from '../../assets/simon.png'
 import tom from '../../assets/tom.png'
 import megan from '../../assets/megan.png'
 import cameron from '../../assets/cameron.png'
-import bennett from '../../assets/bennett.jpeg'; // Importing bennett.jpeg
-
+ 
 const Sidebar = ({ sidebar, category, setCategory }) => {
   return (
     <div className={`sidebar ${sidebar ? "" : "small-sidebar"}`}>
@@ -38,8 +37,7 @@ const Sidebar = ({ sidebar, category, setCategory }) => {
         <div className={`side-link`}><img src={tom} alt="" /><p>Justin Bieber</p></div>
         <div className={`side-link`}><img src={megan} alt="" /><p>5-Minute Crafts</p></div>
         <div className={`side-link`}><img src={cameron} alt="" /><p>Nas Daily</p></div>
-        <div className={`side-link`}><img src={bennett} alt="" /><p>Bennett</p></div> {/* Using bennett.jpeg */}
-      </div>
+       </div>
     </div>
   )
 }

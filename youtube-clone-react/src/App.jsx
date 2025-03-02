@@ -10,7 +10,7 @@ import UserProfile from "./Pages/UserPage/UserProfile";
 import Login from "./Components/Authorization/Login/LoginPage";
 import Registration from "./Components/Authorization/Register/Registration";
 import { AuthProvider } from "./Components/Authorization/AuthContext/AuthContext";
-
+ 
 const App = () => {
   const [user, setUser] = useState(null); // State to track the signed-in user
   const [sidebar, setSidebar] = useState(true);
@@ -50,13 +50,12 @@ const App = () => {
         <Navbar setSidebar={setSidebar} />
         <Header onFormSubmit={onTermSubmit} />
         <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login"
-            element={user ? <Navigate to="/home" replace /> : <Login />} />
-        <Route path="/register" element={<Registration />} />
-        <Route path="/home" element={<Home sidebar={sidebar} />}  />
-        <Route path="/home/video/:categoryId/:videoId" element={<Video />} />
-        <Route path="/profile" element={<UserProfile />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={user ? <Navigate to="/home" replace /> : <Login />} />
+          <Route path="/register" element={<Registration />} />
+          <Route path="/home" element={<Home sidebar={sidebar} />} />
+          <Route path="/home/video/:categoryId/:videoId" element={<Video />} />
+          <Route path="/profile" element={<UserProfile />} />
         </Routes>
 
         {/* Render search results */}
@@ -68,6 +67,9 @@ const App = () => {
             </div>
           ))}
         </div>
+
+        {/* Use ImageUploader component */}
+        {user && <ImageUploader />}
       </div>
     </AuthProvider>
   );

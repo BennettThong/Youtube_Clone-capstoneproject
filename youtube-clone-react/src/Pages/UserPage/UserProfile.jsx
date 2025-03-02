@@ -1,103 +1,146 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { AuthContext } from '../../Components/Authorization/AuthContext/AuthContext';
-import { storage } from "../../Components/Firebase/firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import React, { useState, useEffect } from "react";
+import { getAuth, updateProfile, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db } from "../../Components/Firebase/firebase";
 
 const UserProfile = () => {
-    const { currentUser } = useContext(AuthContext);
-    const [profilePicUrl, setProfilePicUrl] = useState(''); // Default profile picture URL
-    const [uploading, setUploading] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(null); // State to handle selected image
+  const [profilePic, setProfilePic] = useState("https://ui-avatars.com/api/?name=Bennet+Thong"); // Default avatar
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const auth = getAuth();
+  const storage = getStorage();
+  const user = auth.currentUser;
 
-    useEffect(() => {
-      if (currentUser && currentUser.photoURL) {
-        setProfilePicUrl(currentUser.photoURL);
-      }
-    }, [currentUser]);
-  
-    // Handle image selection
-    const handleImageChange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const imageURL = URL.createObjectURL(file); // Preview the selected image
-        setSelectedImage(imageURL);
+  // 🔹 Fetch Profile Picture from Firestore when component loads
+  useEffect(() => {
+    const fetchProfilePic = async () => {
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          setProfilePic(userDocSnap.data().profilePicture || "https://ui-avatars.com/api/?name=Bennet+Thong");
+        }
       }
     };
-  
-    // Placeholder upload logic (implement Firebase or other backend logic here)
-    const handleUpload = () => {
-      if (!selectedImage) {
-        alert("Please select an image first.");
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) fetchProfilePic();
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  // Handle Image Selection
+  const handleImageChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
+  // 🔹 Upload Image to Firebase Storage & Update Firestore
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      alert("Please select an image first!");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      if (!user) {
+        alert("User not logged in!");
+        setUploading(false);
         return;
       }
-      setUploading(true);
-      // Simulate upload process
-      setTimeout(() => {
-        alert("Image uploaded successfully!");
-        setUploading(false);
-        setProfilePicUrl(selectedImage); // Set the uploaded image as the profile picture
-      }, 2000);
-    };
-  
-    return (
-      <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6">
-        <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-2xl font-semibold text-center text-gray-700 mb-4">
-            User Profile
-          </h1>
-  
-          {/* Profile Picture Preview */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-4">
-              {selectedImage ? (
-                <img
-                  src={selectedImage}
-                  alt="Selected Profile"
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                profilePicUrl ? (
-                  <img
-                    src={profilePicUrl}
-                    alt="Profile Picture"
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <span className="text-gray-400">No Image</span>
-                )
-              )}
-            </div>
-  
-            <label
-              htmlFor="imageUpload"
-              className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-sm"
-            >
-              Choose Image
-            </label>
-            <input
-              id="imageUpload"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
+
+      const storageRef = ref(storage, `profilePictures/${user.uid}`);
+      const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Upload is ${progress}% done`);
+        },
+        (error) => {
+          console.error("Upload error:", error);
+          setUploading(false);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          console.log("Uploaded image URL:", downloadURL);
+
+          // 🔹 Update Firebase Auth Profile
+          await updateProfile(user, { photoURL: downloadURL });
+          console.log("Firebase Auth Profile Updated!");
+
+          // 🔹 Update Firestore Profile
+          const userDocRef = doc(db, "users", user.uid);
+          await updateDoc(userDocRef, { profilePicture: downloadURL });
+
+          // 🔹 Force UI refresh by triggering auth change
+          await auth.currentUser.reload();
+
+          // Update UI with new profile picture
+          setProfilePic(downloadURL);
+          setUploading(false);
+
+          alert("Profile picture updated successfully!");
+        }
+      );
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
+        <h1 className="text-2xl font-semibold text-center text-gray-700 mb-4">
+          User Profile
+        </h1>
+
+        {/* Profile Picture Preview */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-4">
+            <img
+              src={profilePic}
+              alt="Profile Picture"
+              className="object-cover w-full h-full"
             />
           </div>
-  
-          {/* Upload Button */}
-          <button
-            onClick={handleUpload}
-            disabled={uploading}
-            className={`w-full py-2 px-4 rounded-lg text-sm ${
-              uploading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-500 hover:bg-green-600 text-white"
-            }`}
+
+          <label
+            htmlFor="imageUpload"
+            className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-sm"
           >
-            {uploading ? "Uploading..." : "Upload Image"}
-          </button>
+            Choose Image
+          </label>
+          <input
+            id="imageUpload"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
         </div>
+
+        {/* Upload Button */}
+        <button
+          onClick={handleUpload}
+          disabled={uploading}
+          className={`w-full py-2 px-4 rounded-lg text-sm ${
+            uploading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-600 text-white"
+          }`}
+        >
+          {uploading ? "Uploading..." : "Upload Image"}
+        </button>
       </div>
-    );
-  };
-  
-  export default UserProfile;
+    </div>
+  );
+};
+
+export default UserProfile;

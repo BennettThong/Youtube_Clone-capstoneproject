@@ -8,11 +8,16 @@ nav{
     z-index: 10;
 }
 .nav-right img{
-    width: 25px;
-    margin-right: 25px;
+    .nav-right img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover; /* Ensure image fills space */
+        display: block; /* Ensure image is visible */
+    }
 }
 .nav-right .user-icon{
-    width: 35px;
+    width: 25px;
     border-radius: 50%;
     margin-right: 0;
 }
@@ -39,25 +44,27 @@ nav{
     width: 15px;
 }
 
-@media (max-width: 900px){
-    .menu-icon{
+@media (max-width: 900px) {
+    .menu-icon {
         display: none;
     }
-    .nav-right img{
-        display: none;
+    .nav-right img {
+        display: block; /* ✅ Ensure image is always visible */
+        width: 40px;  /* Adjust size for smaller screens */
+        height: 40px;
     }
-    .nav-right .user-icon{
+    .nav-right .user-icon {
         display: block;
-        width: 30px;
+        width: 40px;
+        height: 40px;
     }
-    .logo{
+    .logo {
         width: 90px;
     }
-    .nav-middle .mic-icon{
+    .nav-middle .mic-icon {
         display: none;
     }
-    .nav-middle .search-box input{
+    .nav-middle .search-box input {
         width: 100px;
-     }
-    
+    }
 }
