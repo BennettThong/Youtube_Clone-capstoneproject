@@ -7,27 +7,28 @@ import { updateProfile, onAuthStateChanged } from "firebase/auth";
 const ImageUploader = () => {
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
-  const [profilePic, setProfilePic] = useState("https://ui-avatars.com/api/?name=Bennet+Thong"); // Default avatar
+  const [profilePic, setProfilePic] = useState(null);
   const storage = getStorage();
 
-  // 🔹 Check if user is logged in and load their profile picture
+  // 🟢 Load user profile picture on authentication change
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        console.log("User is logged in:", user); // Debugging
-        localStorage.setItem("user", JSON.stringify(user)); // Persist user in localStorage
+        console.log("User is logged in:", user);
 
-        // Fetch profile picture from Firestore
+        // Fetch user's stored profile picture from Firestore
         const userDocRef = doc(db, "users", user.uid);
         const userDocSnap = await getDoc(userDocRef);
 
-        if (userDocSnap.exists()) {
-          setProfilePic(userDocSnap.data().profilePicture || "https://ui-avatars.com/api/?name=Bennet+Thong");
+        if (userDocSnap.exists() && userDocSnap.data().profilePicture) {
+          setProfilePic(userDocSnap.data().profilePicture);
+        } else {
+          // If no custom profile picture, fall back to UI Avatar
+          setProfilePic(`https://ui-avatars.com/api/?name=Bennett+Thong=${encodeURIComponent(user.displayName || "User")}`);
         }
       } else {
         console.log("User is logged out");
-        localStorage.removeItem("user"); // Remove user on logout
-        setProfilePic("https://ui-avatars.com/api/?name=Bennet+Thong"); // Reset to default avatar
+        setProfilePic("https://ui-avatars.com/api/?name=Bennett+Thong");
       }
     });
 
@@ -39,7 +40,7 @@ const ImageUploader = () => {
     setFile(e.target.files[0]);
   };
 
-  // 🔹 Upload and Update Profile Picture
+  // 🟢 Upload and Update Profile Picture
   const handleUpload = async () => {
     if (!file) {
       alert("Please select a file first!");
@@ -48,8 +49,6 @@ const ImageUploader = () => {
 
     try {
       const user = auth.currentUser;
-      console.log("Current User:", user); // Debugging
-
       if (!user) {
         alert("User not logged in!");
         return;
@@ -69,23 +68,23 @@ const ImageUploader = () => {
           console.error("Upload error:", error);
         },
         async () => {
-          // Get the uploaded image URL
+          // Get uploaded image URL
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           console.log("Uploaded image URL:", downloadURL);
-          
-          // 🟢 Use downloadURL instead of auth.currentUser.photoURL
-          setProfilePic(`${downloadURL}?t=${new Date().getTime()}`); // Avoid browser caching
+
+          // 🟢 Append a timestamp to prevent caching issues
+          const timestampedURL = `${downloadURL}?t=${new Date().getTime()}`;
+
+          // 🟢 Update state immediately for instant UI update
+          setProfilePic(timestampedURL);
 
           // Update Firebase Auth Profile
-          await updateProfile(user, { photoURL: downloadURL });
+          await updateProfile(user, { photoURL: timestampedURL });
           console.log("Firebase Auth Profile Updated!");
 
           // Update Firestore Profile
           const userDocRef = doc(db, "users", user.uid);
-          await updateDoc(userDocRef, { profilePicture: downloadURL });
-
-          // 🟢 Force UI refresh by triggering auth change
-          await auth.currentUser.reload();
+          await updateDoc(userDocRef, { profilePicture: timestampedURL });
 
           alert("Profile picture updated successfully!");
         }
@@ -100,7 +99,7 @@ const ImageUploader = () => {
       <h2>Upload Profile Picture</h2>
 
       {profilePic ? (
-        <img src={profilePic} alt="Profile" width="100" />
+        <img src={profilePic} alt="Profile" width="100" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Bennett+Thong'; }} />
       ) : (
         <p>No profile picture available</p>
       )}

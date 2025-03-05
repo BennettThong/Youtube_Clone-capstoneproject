@@ -1,25 +1,20 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../Components/Sidebar/Sidebar";
 import Feed from "../../Components/Feed/Feed";
-import ImageUploader from "../../Components/ImageUpload/ImageUploader";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../Components/Firebase/firebase";
-import "./Home.css";
+import './Home.css';
 import LogoutButton from "../../Components/Authorization/Buttons/LogoutButton";
 import { useAuth } from "../../Components/Authorization/AuthContext/AuthContext";
 import { Link } from "react-router-dom";
 
 const Home = ({ sidebar }) => {
   const [category, setCategory] = useState(0);
-  const [profilePic, setProfilePic] = useState(
-    "https://ui-avatars.com/api/?name=User"
-  ); // Default avatar
+  const [profilePic, setProfilePic] = useState("https://ui-avatars.com/api/?name=Bennett+Thong"); // Default avatar
   const { userLoggedIn } = useAuth();
-  const auth = getAuth();
 
-  console.log("Rendering Home.jsx");
-  console.log("userLoggedIn:", userLoggedIn); // Debugging authentication status
+  const auth = getAuth();
 
   // Fetch Profile Picture When User Logs In
   useEffect(() => {
@@ -29,20 +24,18 @@ const Home = ({ sidebar }) => {
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
-          setProfilePic(
-            userDocSnap.data().profilePicture ||
-              "https://ui-avatars.com/api/?name=User"
-          );
+          setProfilePic(userDocSnap.data().profilePicture || "https://ui-avatars.com/api/?name=Bennett+Thong");
         }
       }
     };
 
     // Listen for Authentication State Changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("Auth State Changed: ", user); // Debugging authentication state
       if (user) {
         fetchProfilePic(user); // Fetch new profile pic when user logs in
       } else {
-        setProfilePic("https://ui-avatars.com/api/?name=User"); // Reset on logout
+        setProfilePic("https://ui-avatars.com/api/?name=Bennett+Thong"); // Reset on logout
       }
     });
 
@@ -52,20 +45,10 @@ const Home = ({ sidebar }) => {
   return (
     <>
       {/* Pass updated profilePic to Sidebar */}
-      <Sidebar
-        setCategory={setCategory}
-        sidebar={sidebar}
-        category={category}
-        profilePic={profilePic}
-      />
+      <Sidebar setCategory={setCategory} sidebar={sidebar} category={category} profilePic={profilePic} />
 
       <div className={`container ${sidebar ? "" : " large-container"}`}>
         <Feed category={category} />
-
-        {/* Always Show LogoutButton for Debugging */}
-        <LogoutButton />
-
-        {/* Conditionally Render Logout or Login Button */}
         {userLoggedIn ? (
           <LogoutButton />
         ) : (
@@ -76,9 +59,6 @@ const Home = ({ sidebar }) => {
           </Link>
         )}
       </div>
-
-      {/* Add ImageUploader to allow profile picture update */}
-      {userLoggedIn && <ImageUploader setProfilePic={setProfilePic} />}
     </>
   );
 };

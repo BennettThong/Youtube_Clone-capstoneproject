@@ -1,18 +1,34 @@
+
+
 import React, { useState, useEffect } from "react";
-import { getAuth, updateProfile, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import {
+  getAuth,
+  updateProfile,
+  onAuthStateChanged
+} from "firebase/auth";
+import {
+  doc,
+  getDoc,
+  updateDoc
+} from "firebase/firestore";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL
+} from "firebase/storage";
 import { db } from "../../Components/Firebase/firebase";
 
 const UserProfile = () => {
   const [profilePic, setProfilePic] = useState("https://ui-avatars.com/api/?name=Bennet+Thong"); // Default avatar
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+
   const auth = getAuth();
   const storage = getStorage();
   const user = auth.currentUser;
 
-  // 🔹 Fetch Profile Picture from Firestore when component loads
+  // Fetch current user's stored profile URL from Firestore
   useEffect(() => {
     const fetchProfilePic = async () => {
       if (user) {
@@ -20,7 +36,11 @@ const UserProfile = () => {
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
-          setProfilePic(userDocSnap.data().profilePicture || "https://ui-avatars.com/api/?name=Bennet+Thong");
+          // We expect a full download URL to be stored in Firestore
+          const storedURL = userDocSnap.data().profilePicture;
+          if (storedURL) {
+            setProfilePic(storedURL);
+          }
         }
       }
     };
@@ -30,14 +50,14 @@ const UserProfile = () => {
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth, user]);
 
-  // Handle Image Selection
+  // Handle image file selection
   const handleImageChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
 
-  // 🔹 Upload Image to Firebase Storage & Update Firestore
+  // Upload new image to Firebase Storage & update Firestore with public URL
   const handleUpload = async () => {
     if (!selectedFile) {
       alert("Please select an image first!");
@@ -67,21 +87,22 @@ const UserProfile = () => {
           setUploading(false);
         },
         async () => {
+          // Get the final public download URL
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           console.log("Uploaded image URL:", downloadURL);
 
-          // 🔹 Update Firebase Auth Profile
+          // Update Firebase Auth profile (optional)
           await updateProfile(user, { photoURL: downloadURL });
           console.log("Firebase Auth Profile Updated!");
 
-          // 🔹 Update Firestore Profile
+          // Update Firestore doc with the full download URL
           const userDocRef = doc(db, "users", user.uid);
           await updateDoc(userDocRef, { profilePicture: downloadURL });
 
-          // 🔹 Force UI refresh by triggering auth change
+          // Force UI refresh by reloading auth user (optional)
           await auth.currentUser.reload();
 
-          // Update UI with new profile picture
+          // Update local state
           setProfilePic(downloadURL);
           setUploading(false);
 
@@ -110,7 +131,6 @@ const UserProfile = () => {
               className="object-cover w-full h-full"
             />
           </div>
-
           <label
             htmlFor="imageUpload"
             className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-sm"
