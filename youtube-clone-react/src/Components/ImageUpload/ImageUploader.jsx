@@ -2,40 +2,37 @@ import React, { useState, useEffect } from "react";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { db, auth } from "../../Components/Firebase/firebase";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
-import { getAuth, updateProfile, onAuthStateChanged } from "firebase/auth";
+import { updateProfile, onAuthStateChanged } from "firebase/auth";
 
 const ImageUploader = () => {
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
   const [profilePic, setProfilePic] = useState("https://ui-avatars.com/api/?name=Bennet+Thong"); // Default avatar
-
-  const auth = getAuth();
   const storage = getStorage();
 
-  // 🔹 Fetch Profile Picture When Auth State Changes
+  // 🔹 Check if user is logged in and load their profile picture
   useEffect(() => {
-    const fetchProfilePic = async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        console.log("User is logged in:", user); // Debugging
+        localStorage.setItem("user", JSON.stringify(user)); // Persist user in localStorage
+
+        // Fetch profile picture from Firestore
         const userDocRef = doc(db, "users", user.uid);
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
           setProfilePic(userDocSnap.data().profilePicture || "https://ui-avatars.com/api/?name=Bennet+Thong");
         }
-      }
-    };
-
-    // 🔹 Listen for Authentication State Changes
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        fetchProfilePic(user); // Fetch new profile pic on login
       } else {
-        setProfilePic("https://ui-avatars.com/api/?name=Bennet+Thong"); // Reset on logout
+        console.log("User is logged out");
+        localStorage.removeItem("user"); // Remove user on logout
+        setProfilePic("https://ui-avatars.com/api/?name=Bennet+Thong"); // Reset to default avatar
       }
     });
 
     return () => unsubscribe();
-  }, [auth]); // 🔹 Only runs when `auth` changes
+  }, []);
 
   // Handle File Selection
   const handleFileChange = (e) => {
@@ -51,6 +48,8 @@ const ImageUploader = () => {
 
     try {
       const user = auth.currentUser;
+      console.log("Current User:", user); // Debugging
+
       if (!user) {
         alert("User not logged in!");
         return;

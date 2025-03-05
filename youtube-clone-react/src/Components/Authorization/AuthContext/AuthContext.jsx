@@ -1,8 +1,8 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../Firebase/firebase";
 
-const AuthContext = React.createContext();
+const AuthContext = createContext();
 
 export function useAuth() {
   return useContext(AuthContext);
@@ -24,13 +24,13 @@ export function AuthProvider({ children }) {
     if (user) {
       setCurrentUser({ ...user });
 
-      // check if provider is email and password login
+      // Check if provider is email and password login
       const isEmail = user.providerData.some(
         (provider) => provider.providerId === "password"
       );
       setIsEmailUser(isEmail);
 
-      // check if the auth provider is google or not
+      // Check if the auth provider is Google
       const isGoogle = user.providerData.some(
         (provider) => provider.providerId === "google.com"
       );
@@ -45,12 +45,19 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }
 
+  const logout = () => {
+    localStorage.removeItem("user");
+    setCurrentUser(null);
+    setUserLoggedIn(false);
+  };
+
   const value = {
     userLoggedIn,
     isEmailUser,
     isGoogleUser,
     currentUser,
     setCurrentUser,
+    logout,
   };
 
   return (

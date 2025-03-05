@@ -9,21 +9,22 @@ import ImageUploader from "./Components/ImageUpload/ImageUploader";
 import UserProfile from "./Pages/UserPage/UserProfile";
 import Login from "./Components/Authorization/Login/LoginPage";
 import Registration from "./Components/Authorization/Register/Registration";
-import { AuthProvider } from "./Components/Authorization/AuthContext/AuthContext";
- 
+import { useAuth } from "./Components/Authorization/AuthContext/AuthContext";
+import LogoutButton from "./Components/Authorization/Buttons/LogoutButton";
+
 const App = () => {
-  const [user, setUser] = useState(null); // State to track the signed-in user
   const [sidebar, setSidebar] = useState(true);
   const [videos, setVideos] = useState([]);
   const navigate = useNavigate();
+  const auth = useAuth(); // ✅ Ensure auth is defined
 
-  // Simulated authentication check (replace with your actual logic)
-  useEffect(() => {
-    const loggedInUser = localStorage.getItem("user"); // Example: Retrieve user data from localStorage
-    if (loggedInUser) {
-      setUser(JSON.parse(loggedInUser)); // Simulate logged-in user
-    }
-  }, []);
+  if (!auth) {
+    return <p>Loading...</p>; // ✅ Handle undefined auth case
+  }
+
+  const { userLoggedIn } = auth;
+
+  console.log("App.js: userLoggedIn:", userLoggedIn); // Debugging user authentication
 
   const onTermSubmit = async (term) => {
     try {
@@ -45,33 +46,39 @@ const App = () => {
   };
 
   return (
-    <AuthProvider>
-      <div>
-        <Navbar setSidebar={setSidebar} />
-        <Header onFormSubmit={onTermSubmit} />
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={user ? <Navigate to="/home" replace /> : <Login />} />
-          <Route path="/register" element={<Registration />} />
-          <Route path="/home" element={<Home sidebar={sidebar} />} />
-          <Route path="/home/video/:categoryId/:videoId" element={<Video />} />
-          <Route path="/profile" element={<UserProfile />} />
-        </Routes>
+    <div>
+      <Navbar setSidebar={setSidebar} />
+      <Header onFormSubmit={onTermSubmit} />
 
-        {/* Render search results */}
-        <div>
-          {videos.map((video) => (
-            <div key={video.id.videoId}>
-              <h3>{video.snippet.title}</h3>
-              <p>{video.snippet.description}</p>
-            </div>
-          ))}
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route 
+          path="/login" 
+          element={userLoggedIn ? <Navigate to="/home" replace /> : <Login />} 
+        />
+        <Route path="/register" element={<Registration />} />
+        <Route path="/home" element={<Home sidebar={sidebar} />} />
+        <Route path="/home/video/:categoryId/:videoId" element={<Video />} />
+        <Route path="/profile" element={<UserProfile />} />
+      </Routes>
+
+      {/* Show Logout Button in App Footer */}
+      {userLoggedIn && (
+        <div style={{ textAlign: "center", marginTop: "20px" }}>
+          <LogoutButton />
         </div>
+      )}
 
-        {/* Use ImageUploader component */}
-        {user && <ImageUploader />}
+      {/* Render search results */}
+      <div>
+        {videos.map((video) => (
+          <div key={video.id.videoId}>
+            <h3>{video.snippet.title}</h3>
+            <p>{video.snippet.description}</p>
+          </div>
+        ))}
       </div>
-    </AuthProvider>
+    </div>
   );
 };
 
